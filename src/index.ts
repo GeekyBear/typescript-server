@@ -1,10 +1,13 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import router from './routes/Route';
+import cookies from 'cookie-parser';
+
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cookies());
 app.use(router);
 
 app.get('/', (req: Request, res: Response) => {

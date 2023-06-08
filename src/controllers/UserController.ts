@@ -18,9 +18,9 @@ const Register = async (req: Request, res: Response): Promise<Response> => {
             roleId: 1
         });
 
-        return res.status(201).send(Helper.ResponseData(201, "User created", null, user));
+        return res.status(201).send(Helper.ResponseData(201, 'User created', null, user));
     } catch (error: any) {
-        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+        return res.status(500).send(Helper.ResponseData(500, '', error, null));
     };
 };
 
@@ -34,13 +34,13 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
         });
 
         if (!user) {
-            return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+            return res.status(401).send(Helper.ResponseData(401, 'Unauthorized', null, null));
         };
 
         const matched = await PassHelper.PasswordCompare(password, user.password);
 
         if (!matched) {
-            return res.status(401).send(Helper.ResponseData(401, "Unauthorized", null, null));
+            return res.status(401).send(Helper.ResponseData(401, 'Unauthorized', null, null));
         }
 
         const dataUser = {
@@ -60,7 +60,7 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
         await user.save;
 
         // Saving the refresh token in local storage
-        res.cookie('refresh token', refreshToken, {
+        res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             maxAge: 24 * 60 * 60 * 1000
         });
@@ -75,11 +75,50 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
             token: token
         }
 
-        return res.status(200).send(Helper.ResponseData(200, "OK", null, responseUser));
+        return res.status(200).send(Helper.ResponseData(200, 'OK', null, responseUser));
 
     } catch (error) {
-        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+        return res.status(500).send(Helper.ResponseData(500, '', error, null));
     }
 }
 
-export default { Register, UserLogin };
+const RefreshToken = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (!refreshToken) {
+            return res.status(401).send(Helper.ResponseData(401, 'Unauthorized', null, null));
+        }
+
+        const decodedUser = Helper.ExtractRefreshToken(refreshToken);
+
+        if (!decodedUser) {
+            return res.status(401).send(Helper.ResponseData(401, 'Unauthorized', null, null));
+        }
+
+        const token = Helper.GenerateToken({
+            name: decodedUser.name,
+            email: decodedUser.email,
+            role: decodedUser.roleId,
+            verified: decodedUser.verified,
+            active: decodedUser.active,
+        });
+
+        const resultUser = {
+            name: decodedUser.name,
+            email: decodedUser.email,
+            role: decodedUser.roleId,
+            verified: decodedUser.verified,
+            active: decodedUser.active,
+            token: token
+        }
+
+        return res.status(200).send(Helper.ResponseData(200, 'ok', null, resultUser));
+
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, '', error, null));
+    }
+}
+
+
+export default { Register, UserLogin, RefreshToken };
