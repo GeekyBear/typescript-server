@@ -2,6 +2,8 @@ import { Request, response, Response } from 'express';
 import User from '../db/models/User';
 import Helper from '../helpers/Helper';
 import PassHelper from '../helpers/PassHelper';
+import { userInfo } from 'os';
+import Role from '../db/models/Role';
 
 const Register = async (req: Request, res: Response): Promise<Response> => {
     try {
@@ -120,5 +122,59 @@ const RefreshToken = async (req: Request, res: Response): Promise<Response> => {
     }
 }
 
+const UserDetail = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const email = res.locals.userEmail;
+        const user = await User.findOne({
+            where: {
+                email
+            }, include: {
+                model: Role,
+                attributes: ['id', 'roleName']
+            }
+        })
 
-export default { Register, UserLogin, RefreshToken };
+        if (!user) {
+            return res.status(404).send(Helper.ResponseData(404, 'User not found', null, null));
+        }
+
+        user.password = '';
+        user.accessToken = '';
+
+        return res.status(200).send(Helper.ResponseData(200, 'OK', null, user));
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, '', error, null));
+    }
+};
+
+const UserLogout = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (!refreshToken) {
+            return res.status(200).send(Helper.ResponseData(200, 'User logout', null, null));
+        }
+
+        const email = res.locals.userEmail;
+        const user = await User.findOne({
+            where: {
+                email
+            }
+        })
+
+        console.log('refreshToken')
+        if (!user) {
+            res.clearCookie('refreshToken');
+            return res.status(200).send(Helper.ResponseData(200, 'User logout', null, null));
+        }
+
+        await user.update({ accessToken: null }, { where: { email: email } })
+        res.clearCookie('refreshToken');
+
+        return res.status(200).send(Helper.ResponseData(200, 'User logout', null, null));
+    } catch (error) {
+        return res.status(500).send(Helper.ResponseData(500, '', error, null));
+    }
+};
+
+export default { Register, UserLogin, RefreshToken, UserDetail, UserLogout };
