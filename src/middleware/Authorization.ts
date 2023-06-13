@@ -18,6 +18,8 @@ const Authenticated = (req: Request, res: Response, next: NextFunction) => {
 
         res.locals.userEmail = result?.email;
 
+        res.locals.roleId = result?.roleId;
+
         next();
 
 
@@ -25,4 +27,47 @@ const Authenticated = (req: Request, res: Response, next: NextFunction) => {
         return res.status(500).send(Helper.ResponseData(500, "", error, null));
     }
 }
-export default { Authenticated };
+
+const SuperUser = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const roleId = parseInt(res.locals.roleId);
+
+        if (roleId !== 1) {
+            return res.status(401).send(Helper.ResponseData(403, "Forbidden", null, null));
+        }
+
+        next();
+    } catch (error: any) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
+const AdminRole = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const roleId = parseInt(res.locals.roleId);
+
+        if (roleId !== 2) {
+            return res.status(401).send(Helper.ResponseData(403, "Forbidden", null, null));
+        }
+
+        next();
+    } catch (error: any) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
+const BasicUser = (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const roleId = parseInt(res.locals.roleId);
+
+        if (roleId !== 3) {
+            return res.status(401).send(Helper.ResponseData(403, "Forbidden", null, null));
+        }
+
+        next();
+    } catch (error: any) {
+        return res.status(500).send(Helper.ResponseData(500, "", error, null));
+    }
+};
+
+export default { Authenticated, SuperUser, AdminRole, BasicUser };

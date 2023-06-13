@@ -7,7 +7,7 @@ import Role from '../db/models/Role';
 
 const Register = async (req: Request, res: Response): Promise<Response> => {
     try {
-        const { name, email, password, confirmPassword } = req.body;
+        const { name, email, roleId, password, confirmPassword } = req.body;
 
         const hashed = await PassHelper.PasswordHashing(password);
 
@@ -17,7 +17,7 @@ const Register = async (req: Request, res: Response): Promise<Response> => {
             password: hashed,
             active: true,
             verified: true,
-            roleId: 1
+            roleId
         });
 
         return res.status(201).send(Helper.ResponseData(201, 'User created', null, user));
@@ -48,10 +48,12 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
         const dataUser = {
             name: user.name,
             email: user.email,
-            role: user.roleId,
+            roleId: user.roleId,
             verified: user.verified,
             active: user.active
         };
+
+        console.log('dataUser', dataUser);
 
         // Generation of token and refreshToken
         const token = Helper.GenerateToken(dataUser);
@@ -71,7 +73,7 @@ const UserLogin = async (req: Request, res: Response): Promise<Response> => {
         const responseUser = {
             name: user.name,
             email: user.email,
-            role: user.roleId,
+            roleId: user.roleId,
             verified: user.verified,
             active: user.active,
             token: token
@@ -101,7 +103,7 @@ const RefreshToken = async (req: Request, res: Response): Promise<Response> => {
         const token = Helper.GenerateToken({
             name: decodedUser.name,
             email: decodedUser.email,
-            role: decodedUser.roleId,
+            roleId: decodedUser.roleId,
             verified: decodedUser.verified,
             active: decodedUser.active,
         });
@@ -109,7 +111,7 @@ const RefreshToken = async (req: Request, res: Response): Promise<Response> => {
         const resultUser = {
             name: decodedUser.name,
             email: decodedUser.email,
-            role: decodedUser.roleId,
+            roleId: decodedUser.roleId,
             verified: decodedUser.verified,
             active: decodedUser.active,
             token: token
@@ -162,7 +164,6 @@ const UserLogout = async (req: Request, res: Response): Promise<Response> => {
             }
         })
 
-        console.log('refreshToken')
         if (!user) {
             res.clearCookie('refreshToken');
             return res.status(200).send(Helper.ResponseData(200, 'User logout', null, null));
